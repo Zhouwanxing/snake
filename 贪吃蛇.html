@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title></title>
+<style>
+.main {
+	border: solid black 1px;
+	width: auto;
+}
+
+.map {
+	width: 17px;
+	height: 17px;
+	background-color: whitesmoke;
+	border: solid #D1D1D1 1px;
+	float: left;
+	margin-top: 0px;
+}
+
+.hang {
+	width: 490px;
+	margin-top: 0px;
+}
+
+.left {
+	float: left;
+}
+
+.img {
+	width: 17;
+	height: 17px;
+}
+</style>
+</head>
+<body>
+	<div id="divMain" class="left"></div>
+	<div class="left">
+		<div>
+			<button id="begin">开始游戏</button>
+			<button id="end">结束游戏</button>
+		</div>
+		<div>
+			最高得分：
+			<span id="top">0</span>
+		</div>
+		<div>
+			当前得分：
+			<span id="score">0</span>
+		</div>
+		<div id="msg"></div>
+	</div>
+</body>
+
+
+<script>
+	var speed = 10;
+	var direction = 1;
+	var max = 0;
+	/*生成地图*/
+	for ( var x = 0; x < 25; x++) {
+		var hang = document.createElement("div");
+		for ( var y = 0; y < 25; y++) {
+			var div = document.createElement("div");
+			div.className = "map";
+			div.id = x + "_" + y;
+			hang.appendChild(div);
+		}
+		hang.className = "hang";
+		document.getElementById("divMain").appendChild(hang);
+		var br = document.createElement("br");
+		document.getElementById("divMain").appendChild(br);
+	}
+
+	function clearMap() {
+		for ( var x = 0; x < 25; x++) {
+			for ( var y = 0; y < 25; y++) {
+				document.getElementById(y + "_" + x).innerHTML = "";
+			}
+		}
+	}
+
+	function drowSnackById(itr, x, y) {
+		switch (itr) {
+		case 0:
+			document.getElementById(y + "_" + x).innerHTML = "<img src='img/head.jpg' class='img'></img>";
+			break;
+		case 1:
+			document.getElementById(y + "_" + x).innerHTML = "<img src='img/body.jpg' class='img'></img>";
+			break;
+		case 2:
+			//document.getElementById(y + "_" + x).innerHTML = "<img src='img/food/"+snake.food_img+".jpg' class='img'></img>";
+			document.getElementById(y + "_" + x).innerHTML = "<img src='img/body.jpg' class='img'></img>";
+			break;
+		default:
+			break;
+		}
+	}
+
+	function msg(msg) {
+		document.getElementById("msg").innerHTML = msg;
+	}
+	function msgClear() {
+		document.getElementById("msg").innerHTML = "";
+	}
+
+	/*键盘回调*/
+	function Snake() {
+		this.moveSpeed = 15;
+		this.list = new Array();
+		this.lenth = 0;
+		this.food = [ -1, -1 ];
+		this.food_img = 0;
+		this.push = function(x, y) {
+			this.list.push(x, y);
+			this.lenth++;
+		};
+		this.push(10, 10);
+		this.push(10, 11);
+		this.push(10, 12);
+		this.createFood = function() {
+			while (true) {
+				this.food[0] = Math.floor(Math.random() * 25);
+				this.food[1] = Math.floor(Math.random() * 25);
+				console.log(this.food[0] + "-" + this.food[1]);
+				for ( var i = this.lenth - 1; i >= 0; i--) {
+					if ((this.list[2 * i] != this.food[0])
+							&& (this.list[2 * i + 1] !== this.food[1])) {
+						this.food_img = Math.floor(Math.random() * 29) + 1;
+						return;
+					}
+				}
+				break;
+			}
+
+		};
+		this.eat = function() {
+		};
+		this.drow = function() {
+			clearMap();
+			drowSnackById(0, this.list[0], this.list[1]);
+			for ( var i = 1; i <= this.lenth - 1; i++) {
+				drowSnackById(1, this.list[2 * i], this.list[2 * i + 1]);
+			}
+			drowSnackById(2, this.food[0], this.food[1]);
+		};
+		this.move = function() {
+			console.log("move");
+			switch (direction) {
+			case 1:
+				/*上*/
+				//撞墙
+				if (this.list[1] - 1 < 0) {
+					end(1);
+					break;
+				}
+				//撞自己
+				for ( var i = this.lenth - 1; i > 0; i--) {
+					if ((this.list[2 * i] == this.list[0])
+							&& (this.list[2 * i + 1] == this.list[1] - 1)) {
+						end(2);
+						break;
+					}
+				}
+				if ((this.list[0] == this.food[0])
+						&& (this.list[1] == this.food[1])) {
+					this.push(-1, -1);
+					this.createFood();
+				}
+				var x = this.list[0];
+				var y = this.list[1];
+				for ( var i = this.lenth - 1; i > 0; i--) {
+					this.list[2 * i] = this.list[2 * i - 2];
+					this.list[2 * i + 1] = this.list[2 * i - 1];
+					console.log(this.list[2 * i] + "  " + this.list[2 * i + 1]
+							+ ">>" + this.list[2 * i - 2] + "	"
+							+ this.list[2 * i - 1]);
+				}
+				this.list[0] = x;
+				this.list[1] = y - 1;
+
+				this.drow();
+				break;
+			case 2:
+				/*下*/
+				if (this.list[1] + 1 > 24) {
+					end(1);
+					break;
+				}
+				//撞自己
+				for ( var i = this.lenth - 1; i > 0; i--) {
+					if ((this.list[2 * i] == this.list[0])
+							&& (this.list[2 * i + 1] == this.list[1] + 1)) {
+						end(2);
+						break;
+					}
+				}
+				if ((this.list[0] == this.food[0])
+						&& (this.list[1] == this.food[1])) {
+					this.push(-1, -1);
+					this.createFood();
+				}
+				var x = this.list[0];
+				var y = this.list[1];
+				for ( var i = this.lenth - 1; i > 0; i--) {
+					this.list[2 * i] = this.list[2 * i - 2];
+					this.list[2 * i + 1] = this.list[2 * i - 1];
+					console.log(this.list[2 * i] + "  " + this.list[2 * i + 1]
+							+ ">>" + this.list[2 * i - 2] + "	"
+							+ this.list[2 * i - 1]);
+				}
+				this.list[0] = x;
+				this.list[1] = y + 1;
+
+				this.drow();
+				break;
+			case 3:
+				/*左*/
+				if (this.list[0] - 1 < 0) {
+					end(1);
+					break;
+				}
+				//撞自己
+				for ( var i = this.lenth - 1; i > 0; i--) {
+					if ((this.list[2 * i] == this.list[0] - 1)
+							&& (this.list[2 * i + 1] == this.list[1])) {
+						end(2);
+						break;
+					}
+				}
+				if ((this.list[0] == this.food[0])
+						&& (this.list[1] == this.food[1])) {
+					this.push(-1, -1);
+					this.createFood();
+				}
+				var x = this.list[0];
+				var y = this.list[1];
+				for ( var i = this.lenth - 1; i > 0; i--) {
+					this.list[2 * i] = this.list[2 * i - 2];
+					this.list[2 * i + 1] = this.list[2 * i - 1];
+					console.log(this.list[2 * i] + "  " + this.list[2 * i + 1]
+							+ ">>" + this.list[2 * i - 2] + "	"
+							+ this.list[2 * i - 1]);
+				}
+				this.list[0] = x - 1;
+				this.list[1] = y;
+
+				this.drow();
+				break;
+			case 4:
+				/*右*/
+				if (this.list[0] + 1 > 24) {
+					end(1);
+					break;
+				}
+				//撞自己
+				for ( var i = this.lenth - 1; i > 0; i--) {
+					if ((this.list[2 * i] == this.list[0] + 1)
+							&& (this.list[2 * i + 1] == this.list[1] + 1)) {
+						end(2);
+						break;
+					}
+				}
+				if ((this.list[0] == this.food[0])
+						&& (this.list[1] == this.food[1])) {
+
+					this.push(-1, -1);
+					this.createFood();
+				}
+				var x = this.list[0];
+				var y = this.list[1];
+				for ( var i = this.lenth - 1; i > 0; i--) {
+					this.list[2 * i] = this.list[2 * i - 2];
+					this.list[2 * i + 1] = this.list[2 * i - 1];
+					console.log(this.list[2 * i] + "  " + this.list[2 * i + 1]
+							+ ">>" + this.list[2 * i - 2] + "	"
+							+ this.list[2 * i - 1]);
+				}
+				this.list[0] = x + 1;
+				this.list[1] = y;
+
+				this.drow();
+				break;
+			default:
+				break;
+			}
+			document.getElementById("score").innerHTML = this.lenth - 3;
+		};
+	}
+
+	//setInterval("snake.move()",150);
+	var snake;
+	var game_time;
+	function begin() {
+		clearInterval(game_time);
+		msg("倒计时：" + 3);
+		setTimeout(function() {
+			msg("倒计时：" + 2);
+			setTimeout(function() {
+				msg("倒计时：" + 1);
+				setTimeout(function() {
+					msg("开始游戏");
+				}, 1000);
+			}, 1000);
+		}, 1000);
+
+		setTimeout(function() {
+			game_time = setInterval('snake.move()', 150);
+		}, 3000);
+
+	}
+	function end(x) {
+		switch (x) {
+		case 0:
+			msg("游戏结束");
+			break;
+		case 1:
+			msg("撞墙，游戏结束");
+			break;
+		case 2:
+			msg("撞到自己，游戏结束");
+			break;
+		default:
+			break;
+		}
+		console.log("end");
+		clearInterval(game_time);
+		if (snake.lenth - 3 > max) {
+			max = snake.lenth - 3;
+			document.getElementById("top").innerHTML = max;
+			alert("大吉大利，晚上吃稽！");
+		}
+	}
+
+	document.getElementById("begin").onclick = function() {
+		direction = 1;
+		snake = new Snake();
+		snake.createFood();
+		snake.drow();
+		begin();
+	};
+	document.getElementById("end").onclick = function() {
+		end(0);
+	};
+	document.onkeydown = function(event) {
+		var event = event || window.event;
+		switch (event.keyCode) {
+		case 37:
+			if (!((snake.list[0] - snake.list[2]) == 1 && ((snake.list[1] - snake.list[3]) == 0))) {
+				direction = 3;
+			}
+			break;
+		case 38:
+			if (!((snake.list[0] - snake.list[2]) == 0 && ((snake.list[1] - snake.list[3]) == 1))) {
+				direction = 1;
+			}
+			break;
+		case 39:
+			if (!((snake.list[0] - snake.list[2]) == -1 && ((snake.list[1] - snake.list[3]) == 0))) {
+				direction = 4;
+			}
+			break;
+		case 40:
+			if (!((snake.list[0] - snake.list[2]) == 0 && ((snake.list[1] - snake.list[3]) == -1))) {
+				direction = 2;
+			}
+			break;
+		default:
+			break;
+		}
+	};
+</script>
+
+</html>
